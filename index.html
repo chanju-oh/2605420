@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>미술사 탐정단: 박물관 수장고의 비밀 (완전체)</title>
+    <style>
+        body { background-color: #1a1a1a; color: #f0c987; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; text-align: center; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        #game-container { max-width: 600px; width: 100%; background-color: #2c2c2c; padding: 30px; border-radius: 10px; box-shadow: 0 0 20px rgba(240, 201, 135, 0.2); border: 1px solid #4a3b22; box-sizing: border-box; position: relative; overflow: hidden; }
+        h1 { color: #fff; text-shadow: 2px 2px 4px #000; font-size: 1.8em; margin-bottom: 5px; }
+        h2 { color: #d4af37; font-size: 1.3em; border-bottom: 1px solid #d4af37; padding-bottom: 10px; margin-top: 0;}
+        p { line-height: 1.6; color: #ddd; word-break: keep-all; font-size: 1.05em; }
+        .stage { display: none; }
+        .stage.active { display: block; animation: fadeIn 0.8s; }
+        .clue-box { background: #222; padding: 15px; border-radius: 5px; text-align: left; font-size: 0.95em; border: 1px dashed #555; margin: 15px 0;}
+        
+        button.action-btn { background-color: #d4af37; color: #111; border: none; padding: 12px 25px; font-size: 1.1em; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.3s; width: 80%; margin-top: 15px; }
+        button.action-btn:hover { background-color: #f0c987; transform: scale(1.02); }
+        .message { margin-top: 15px; font-weight: bold; height: 20px; color: #ff6b6b; }
+        
+        #timer-display { position: absolute; top: 15px; right: 20px; font-size: 1.2em; font-weight: bold; color: #ff6b6b; font-family: monospace; display: none; }
+        input[type="text"] { width: 80%; padding: 12px; margin: 15px 0; border: 2px solid #d4af37; background-color: #111; color: #fff; text-align: center; font-size: 1.1em; border-radius: 5px; }
+
+        /* [1] 드롭다운 */
+        .select-group { margin: 10px 0; display: flex; flex-direction: column; align-items: center; }
+        select { width: 80%; padding: 10px; background: #111; color: #d4af37; border: 1px solid #d4af37; border-radius: 5px; font-size: 1em; text-align: center;}
+
+        /* [2] 도판 퍼즐 */
+        .puzzle-container { margin: 20px auto; width: 300px; height: 300px; display: grid; grid-template-columns: repeat(3, 100px); grid-template-rows: repeat(3, 100px); gap: 2px; background: #111; padding: 5px; border-radius: 5px; border: 2px solid #555; }
+        .puzzle-piece { width: 100px; height: 100px; cursor: pointer; box-sizing: border-box; transition: transform 0.1s, border 0.1s; background-image: url('청자상감운학문매병.jpg'); background-size: 300px 300px; }
+        .puzzle-piece.selected { border: 4px solid #ff6b6b; transform: scale(0.9); z-index: 10; border-radius: 5px;}
+
+        /* [3] 순서 터치 버튼 */
+        .order-btn { display: inline-block; width: 80%; margin: 5px 0; padding: 15px; background: #111; color: #fff; border: 2px solid #555; border-radius: 8px; font-size: 1.1em; cursor: pointer; transition: 0.2s; }
+        .order-btn.selected { background: #d4af37; color: #000; border-color: #f0c987; font-weight: bold; }
+
+        /* [4] 컬러 사이클 */
+        .color-group { display: flex; justify-content: space-around; margin: 20px 0; }
+        .color-item { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 30%;}
+        .color-btn { width: 100%; padding: 20px 0; font-weight: bold; border-radius: 8px; border: 2px solid #fff; cursor: pointer; transition: 0.3s; font-size: 1.1em; }
+
+        /* [5] 다이얼 자물쇠 */
+        .lock-container { display: flex; justify-content: center; gap: 15px; margin: 20px 0; }
+        .dial-group { display: flex; flex-direction: column; align-items: center; background-color: #111; border: 2px solid #d4af37; border-radius: 8px; padding: 10px; width: 50px; }
+        .dial-btn { background: none; border: none; color: #888; font-size: 1.5em; cursor: pointer; padding: 5px; width: 100%; }
+        .dial-btn:hover { color: #f0c987; }
+        .dial-value { font-size: 2.5em; font-weight: bold; color: #fff; margin: 10px 0; user-select: none; }
+
+        /* [6] 금고 키패드 */
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 200px; margin: 20px auto; }
+        .keypad button { background: #333; color: #fff; font-size: 1.5em; padding: 15px; border: 1px solid #555; border-radius: 5px; cursor: pointer; }
+        .keypad button:active { background: #d4af37; color: #000; }
+        #keypad-display { font-size: 2em; letter-spacing: 10px; color: #4ade80; background: #000; padding: 10px; border-radius: 5px; width: 150px; margin: 0 auto 15px auto; height: 35px;}
+
+        /* [7] 슬라이더 */
+        .slider-container { margin: 30px 0; }
+        input[type="range"] { width: 80%; accent-color: #ff4500; cursor: pointer; }
+        .temp-display { font-size: 2em; font-weight: bold; color: #ff6b6b; margin-top: 10px; display: block; }
+
+        /* [8] O/X 토글 스위치 */
+        .switch-container { display: flex; align-items: center; justify-content: space-between; background: #222; padding: 10px 15px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #444; }
+        .switch-text { font-size: 0.95em; color: #ddd; text-align: left; width: 75%; word-break: keep-all; }
+        .toggle-switch { position: relative; width: 50px; height: 26px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ff6b6b; transition: .4s; border-radius: 26px; }
+        .slider:before { position: absolute; content: "X"; color: #ff6b6b; font-size: 14px; font-weight: bold; line-height: 20px; text-align: center; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #4ade80; }
+        input:checked + .slider:before { transform: translateX(24px); content: "O"; color: #4ade80; }
+
+        /* [9] 함정 찾기 2x2 그리드 */
+        .grid-2x2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .grid-btn { background: #222; border: 2px solid #555; color: #fff; padding: 20px 10px; border-radius: 8px; cursor: pointer; font-size: 1em; transition: 0.2s; word-break: keep-all; line-height: 1.4;}
+        .grid-btn:hover { border-color: #d4af37; background: #333; }
+        .grid-btn.wrong { background: #ff6b6b; color: #fff; border-color: #ff0000; }
+        .grid-btn.correct { background: #4ade80; color: #000; border-color: #00ff00; }
+
+        /* [10] 단어 블록 */
+        .word-blocks { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; }
+        .block { background-color: #111; border: 2px solid #d4af37; color: #fff; padding: 15px 20px; font-size: 1.2em; border-radius: 5px; cursor: pointer; user-select: none; transition: 0.2s; }
+        .block:hover { background-color: #d4af37; color: #111; transform: translateY(-3px); }
+        .answer-display { background: #000; border: 1px solid #555; height: 40px; width: 80%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 1.5em; color: #4ade80; letter-spacing: 5px; border-radius: 5px; }
+
+        /* 엔딩 */
+        .certificate { border: 3px double #d4af37; padding: 20px; background: rgba(0,0,0,0.5); margin-top: 20px; }
+        .leaderboard { margin-top: 20px; text-align: left; background: #111; padding: 15px; border-radius: 5px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="timer-display">00:00</div>
+    <h1>🕵️‍♂️ 미술사 탐정단</h1>
+    <h2>비밀 수장고를 파헤쳐라!</h2>
+    
+    <div id="stage0" class="stage active">
+        <p>전시관으로 이송될 유물들이 </b> 무려 10중 보안이 걸린 비밀 수장고에 갇혔습니다! </b> 시스템이 완전히 잠기기 전에 모든 암호를 풀어 유물을 구출하세요.</p>
+        <input type="text" id="playerName" placeholder="탐정 이름 (예: 3학년 1반 이홍위)" autocomplete="off">
+        <button class="action-btn" id="startBtn">수장고 진입하기</button>
+        <div id="msg0" class="message"></div>
+    </div>
+
+    <div id="stage1" class="stage">
+        <h2>[1단계] 관찰의 방</h2>
+        <p>각 불상의 형태적 특징을 정확히 연결하세요.</p>
+        <div class="select-group">
+            <label>1. 금동반가사유상</label>
+            <select id="s1_q1">
+                <option value="">선택하세요</option>
+                <option value="결가부좌">결가부좌를 틀고 근엄한 표정</option>
+                <option value="반가부좌">왼쪽 무릎 위에 오른쪽 다리를 올림</option>
+                <option value="입상">두 발을 모으고 서 있는 형태</option>
+            </select>
+        </div>
+        <div class="select-group">
+            <label>2. 석굴암 본존불</label>
+            <select id="s1_q2">
+                <option value="">선택하세요</option>
+                <option value="파격">파격적이고 과장된 얼굴</option>
+                <option value="온화">온화한 미소와 균형 잡힌 신체</option>
+                <option value="근엄">근엄한 표정과 이상적인 신체</option>
+            </select>
+        </div>
+        <div class="select-group">
+            <label>3. 관촉사 석조미륵보살입상</label>
+            <select id="s1_q3">
+                <option value="">선택하세요</option>
+                <option value="없음">대좌가 없음</option>
+                <option value="연화">연꽃 모양의 연화대좌</option>
+            </select>
+        </div>
+        <button class="action-btn" onclick="checkDropdownAnswer()">확인</button>
+        <div id="msg1" class="message"></div>
+    </div>
+
+    <div id="stage2" class="stage">
+        <h2>[2단계] 깨진 유물 복원</h2>
+        <p>이송 중 충격으로 도자기의 도판이 섞여버렸습니다! <span style="color:#f0c987;">두 조각을 차례대로 터치</span>하여 서로 자리를 바꿔 원래 모양으로 복원하세요.</p>
+        <div class="puzzle-container" id="puzzleGrid">
+            </div>
+        <div id="msg2" class="message" style="margin-top:0;"></div>
+    </div>
+
+    <div id="stage3" class="stage">
+        <h2>[3단계] 시간의 방</h2>
+        <p>가장 <span style="color:#f0c987; font-weight:bold;">오래된 시대의 도자기부터 순서대로 터치</span>하세요.</p>
+        <div class="clue-box" style="text-align: center;">고려시대 -> 조선(초) -> 조선(후기)</div>
+        <div id="orderButtons">
+            <button class="order-btn" onclick="selectOrder(this, '백자')">백자 (백자병)</button>
+            <button class="order-btn" onclick="selectOrder(this, '청자')">청자 (상감운학문매병)</button>
+            <button class="order-btn" onclick="selectOrder(this, '분청사기')">분청사기 (박지모란문편병)</button>
+        </div>
+        <button class="action-btn" onclick="checkOrderAnswer()">확인</button>
+        <div id="msg3" class="message"></div>
+    </div>
+
+    <div id="stage4" class="stage">
+        <h2>[4단계] 빛깔의 방</h2>
+        <p>버튼을 눌러 각 도자기에 맞는 올바른 <span style="color:#4ade80;">유약의 색상</span>을 찾아주세요.</p>
+        <div class="color-group">
+            <div class="color-item">
+                <span>청자</span>
+                <button class="color-btn" style="background:#555; color:#fff;" onclick="cycleColor(this)" data-val="0">회색</button>
+            </div>
+            <div class="color-item">
+                <span>분청사기</span>
+                <button class="color-btn" style="background:#555; color:#fff;" onclick="cycleColor(this)" data-val="0">회색</button>
+            </div>
+            <div class="color-item">
+                <span>백자</span>
+                <button class="color-btn" style="background:#555; color:#fff;" onclick="cycleColor(this)" data-val="0">회색</button>
+            </div>
+        </div>
+        <button class="action-btn" onclick="checkColorAnswer()">빛깔 복원</button>
+        <div id="msg4" class="message"></div>
+    </div>
+
+    <div id="stage5" class="stage">
+        <h2>[5단계] 석탑의 암호</h2>
+        <p>아래 설계도에 들어갈 숫자를 모두 <span style="color:#f0c987; font-weight:bold;">더해서</span> 다이얼을 맞추세요.</p>
+        <div class="clue-box">
+            - 불국사 석가탑은 [ A ]단 [ B ]층이다.<br>
+            - 경천사지 십층석탑은 [ C ]단 [ D ]층이다.
+        </div>
+        <div class="lock-container" id="lock5">
+            <div class="dial-group">
+                <button class="dial-btn" onclick="spinDial('s5_d1', 1)">▲</button>
+                <div id="s5_d1" class="dial-value">0</div>
+                <button class="dial-btn" onclick="spinDial('s5_d1', -1)">▼</button>
+            </div>
+            <div class="dial-group">
+                <button class="dial-btn" onclick="spinDial('s5_d2', 1)">▲</button>
+                <div id="s5_d2" class="dial-value">0</div>
+                <button class="dial-btn" onclick="spinDial('s5_d2', -1)">▼</button>
+            </div>
+        </div>
+        <button class="action-btn" onclick="checkDialAnswer()">확인</button>
+        <div id="msg5" class="message"></div>
+    </div>
+
+    <div id="stage6" class="stage">
+        <h2>[6단계] 비밀 금고</h2>
+        <p>각 석탑의 <span style="color:#ff6b6b; font-weight:bold;">층수만</span>을 모아 4자리 패스워드를 누르세요.</p>
+        <div class="clue-box" style="text-align: center;">
+            불국사 석가탑 ➡ 월정사 팔각구층석탑 ➡ 경천사지 십층석탑
+        </div>
+        <div id="keypad-display"></div>
+        <div class="keypad">
+            <button onclick="pressKey(1)">1</button><button onclick="pressKey(2)">2</button><button onclick="pressKey(3)">3</button>
+            <button onclick="pressKey(4)">4</button><button onclick="pressKey(5)">5</button><button onclick="pressKey(6)">6</button>
+            <button onclick="pressKey(7)">7</button><button onclick="pressKey(8)">8</button><button onclick="pressKey(9)">9</button>
+            <button onclick="clearKey()" style="background:#555;">C</button><button onclick="pressKey(0)">0</button><button onclick="checkKeypadAnswer()" style="background:#d4af37; color:#000;">E</button>
+        </div>
+        <div id="msg6" class="message"></div>
+    </div>
+
+    <div id="stage7" class="stage">
+        <h2>[7단계] 도공의 가마터</h2>
+        <p>물을 흡수하지 않는 매끄러운 <span style="color:#f0c987;">자기</span>를 굽기 위한 <span style="color:#ff6b6b;">재벌구이 온도</span>에 슬라이더를 맞추세요.</p>
+        <div class="slider-container">
+            <input type="range" id="kilnTemp" min="800" max="1500" step="50" value="800" oninput="updateTempDisplay(this.value)">
+            <span class="temp-display"><span id="tempValue">800</span>℃</span>
+        </div>
+        <button class="action-btn" onclick="checkSliderAnswer()">온도 설정</button>
+        <div id="msg7" class="message"></div>
+    </div>
+
+    <div id="stage8" class="stage">
+        <h2>[8단계] 공방의 스위치</h2>
+        <p>나전칠기에 대한 설명 중 <span style="color:#4ade80; font-weight:bold;">맞는 것만 O</span>로 켜세요.</p>
+        <div class="switch-container">
+            <span class="switch-text">1. 평탈기법은 자개와 바탕의 높이를 맞추는 기법이다.</span>
+            <label class="toggle-switch"><input type="checkbox" id="sw1"><span class="slider"></span></label>
+        </div>
+        <div class="switch-container">
+            <span class="switch-text">2. 조선시대 나전칠기는 고려시대보다 매우 화려한 것이 특징이다.</span>
+            <label class="toggle-switch"><input type="checkbox" id="sw2"><span class="slider"></span></label>
+        </div>
+        <div class="switch-container">
+            <span class="switch-text">3. 옻칠을 하면 해충을 예방할 수 있다.</span>
+            <label class="toggle-switch"><input type="checkbox" id="sw3"><span class="slider"></span></label>
+        </div>
+        <button class="action-btn" onclick="checkSwitchAnswer()">보안 해제</button>
+        <div id="msg8" class="message"></div>
+    </div>
+
+    <div id="stage9" class="stage">
+        <h2>[9단계] 스파이 색출</h2>
+        <p>다음 나전칠기의 제작 기법 설명 중, <span style="color:#ff6b6b; font-weight:bold;">가짜(틀린 설명)</span>를 찾아 터치하여 파괴하세요.</p>
+        <div class="grid-2x2">
+            <button class="grid-btn" onclick="checkFake(this, false)">타발법은 자개에 균열을 내어 평평하게 만든다.</button>
+            <button class="grid-btn" onclick="checkFake(this, false)">줄음질은 자개를 원하는 모양으로 오린다.</button>
+            <button class="grid-btn" onclick="checkFake(this, true)">모조법은 가늘고 긴 직선 자개를 끊어가며 붙인다.</button>
+            <button class="grid-btn" onclick="checkFake(this, false)">나전이란 조개나 전복 껍질로 무늬를 장식하는 기법이다.</button>
+        </div>
+        <div id="msg9" class="message"></div>
+    </div>
+
+    <div id="stage10" class="stage">
+        <h2>[최종단계] 마스터 패스워드</h2>
+        <p>자개를 원하는 모양으로 오려내는 기법의 이름을 아래 글자 조각들을 <span style="color:#f0c987; font-weight:bold;">순서대로 클릭</span>하여 완성하세요.</p>
+        <div class="answer-display" id="wordDisplay"></div>
+        <div class="word-blocks">
+            <div class="block" onclick="addSyllable('음')">음</div>
+            <div class="block" onclick="addSyllable('타')">타</div>
+            <div class="block" onclick="addSyllable('줄')">줄</div>
+            <div class="block" onclick="addSyllable('끊')">끊</div>
+            <div class="block" onclick="addSyllable('질')">질</div>
+            <div class="block" onclick="addSyllable('발')">발</div>
+        </div>
+        <div style="display:flex; justify-content:center; gap:10px;">
+            <button class="action-btn" style="background:#555; color:#fff; width:30%;" onclick="clearWord()">지우기</button>
+            <button class="action-btn" style="width:50%;" onclick="checkWordAnswer()">시스템 완전 해킹</button>
+        </div>
+        <div id="msg10" class="message"></div>
+    </div>
+
+    <div id="stage11" class="stage">
+        <h2>🎉 보안 돌파 성공!</h2>
+        <div class="certificate" id="certBox">
+            <h3 style="color: #fff; margin-top:0;">📜 그랜드 마스터 인증서</h3>
+            <p>이름: <strong id="resultName" style="color:#d4af37; font-size:1.4em;"></strong> 탐정</p>
+            <p>최종 기록: <strong id="resultTime" style="color:#ff6b6b; font-size:1.4em;"></strong></p>
+            <p style="font-size:0.9em; color:#aaa; margin-top:15px;">위 탐정은 10중 철통 보안을 뚫고 완벽한 미술사 지식을 증명했습니다.</p>
+            <p style="font-size:0.95em; color:#ddd; margin-top:20px;">📸 화면을 캡처하여 자랑스럽게 인증하세요!</p>
+        </div>
+        
+        <div class="leaderboard">
+            <h4 style="margin:0 0 10px 0; color:#d4af37; border-bottom:1px solid #555; padding-bottom:5px;">🏆 기기 내 명예의 전당 (Top 3)</h4>
+            <ul id="rankingList" style="padding-left: 20px; margin: 0; color: #ddd;"></ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    let playerName = "";
+    let startTime, timerInterval;
+
+    // [중요] 페이지 로딩 시 클리어 여부 확인 (기기당 1회 제한)
+    window.onload = function() {
+        if(localStorage.getItem('escapeCleared_Complete') === 'true') {
+            document.getElementById('stage0').classList.remove('active');
+            document.getElementById('stage11').classList.add('active');
+            
+            // 이미 클리어한 사람을 위한 안내창
+            document.getElementById('certBox').innerHTML = `
+                <h3 style="color:#ff6b6b; margin-top:0;">⛔ 이미 탈출에 성공하셨습니다!</h3>
+                <p style="color:#ddd;">이 기기에서는 기록 단축을 위한 중복 참여가 제한됩니다.<br>아래 명예의 전당 기록만 확인 가능합니다.</p>
+            `;
+            showRankingOnly();
+        }
+    };
+
+    document.getElementById("playerName").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") { event.preventDefault(); document.getElementById("startBtn").click(); }
+    });
+
+    document.getElementById("startBtn").addEventListener("click", function() {
+        let nameInput = document.getElementById('playerName').value.trim();
+        let msgBox = document.getElementById('msg0');
+        if(nameInput === "") { msgBox.innerText = "이름을 먼저 입력해주세요!"; return; }
+        
+        playerName = nameInput;
+        document.getElementById('timer-display').style.display = "block";
+        startTime = Date.now();
+        timerInterval = setInterval(updateTimer, 1000);
+        
+        initPuzzle(); 
+        nextStage(1);
+    });
+
+    function updateTimer() {
+        let elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+        let min = String(Math.floor(elapsedTime / 60)).padStart(2, '0');
+        let sec = String(elapsedTime % 60).padStart(2, '0');
+        document.getElementById('timer-display').innerText = `${min}:${sec}`;
+    }
+
+    function nextStage(stageNum) {
+        document.querySelectorAll('.stage').forEach(el => el.classList.remove('active'));
+        document.getElementById('stage' + stageNum).classList.add('active');
+        let msg = document.getElementById('msg' + stageNum);
+        if(msg) msg.innerText = ""; 
+    }
+
+    function shakeElement(id) {
+        let el = document.getElementById(id);
+        if(!el) return;
+        el.style.transform = "translateX(-5px)";
+        setTimeout(() => el.style.transform = "translateX(5px)", 50);
+        setTimeout(() => el.style.transform = "translateX(-5px)", 100);
+        setTimeout(() => el.style.transform = "translateX(0)", 150);
+    }
+
+    // [1단계] 드롭다운
+    function checkDropdownAnswer() {
+        let q1 = document.getElementById('s1_q1').value, q2 = document.getElementById('s1_q2').value, q3 = document.getElementById('s1_q3').value;
+        let msgBox = document.getElementById('msg1');
+        if(q1 === "반가부좌" && q2 === "근엄" && q3 === "없음") {
+            msgBox.style.color = '#4ade80'; msgBox.innerText = "통과!"; setTimeout(() => nextStage(2), 800);
+        } else {
+            msgBox.style.color = '#ff6b6b'; msgBox.innerText = "잘못 연결된 특징이 있습니다.";
+        }
+    }
+
+    // [2단계] 도판 퍼즐 로직
+    let puzzleState = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+    let selectedPieceIndex = -1;
+
+    function initPuzzle() {
+        do { puzzleState.sort(() => Math.random() - 0.5); } 
+        while(puzzleState.every((val, index) => val === index));
+        renderPuzzle();
+    }
+
+    function renderPuzzle() {
+        const grid = document.getElementById('puzzleGrid');
+        grid.innerHTML = '';
+        puzzleState.forEach((originalIndex, currentPos) => {
+            let piece = document.createElement('div');
+            piece.className = 'puzzle-piece';
+            let row = Math.floor(originalIndex / 3);
+            let col = originalIndex % 3;
+            piece.style.backgroundPosition = `-${col * 100}px -${row * 100}px`;
+            piece.onclick = () => handlePieceClick(currentPos);
+            grid.appendChild(piece);
+        });
+    }
+
+    function handlePieceClick(pos) {
+        let pieces = document.querySelectorAll('.puzzle-piece');
+        if(selectedPieceIndex === -1) {
+            selectedPieceIndex = pos;
+            pieces[pos].classList.add('selected');
+        } else {
+            if(selectedPieceIndex !== pos) {
+                let temp = puzzleState[selectedPieceIndex];
+                puzzleState[selectedPieceIndex] = puzzleState[pos];
+                puzzleState[pos] = temp;
+            }
+            selectedPieceIndex = -1;
+            renderPuzzle(); 
+            checkPuzzleWin(); 
+        }
+    }
+
+    function checkPuzzleWin() {
+        let msgBox = document.getElementById('msg2');
+        if(puzzleState.every((val, index) => val === index)) {
+            msgBox.style.color = '#4ade80';
+            msgBox.innerText = "완벽하게 복원되었습니다!";
+            document.getElementById('puzzleGrid').style.border = "4px solid #4ade80";
+            setTimeout(() => nextStage(3), 1500); 
+        }
+    }
+
+    // [3단계] 순서 터치
+    let userOrder = [];
+    function selectOrder(btn, value) {
+        if(btn.classList.contains('selected')) return; 
+        btn.classList.add('selected'); btn.innerText = (userOrder.length + 1) + ". " + btn.innerText; userOrder.push(value);
+    }
+    function checkOrderAnswer() {
+        let msgBox = document.getElementById('msg3');
+        if(userOrder.length !== 3) { msgBox.innerText = "3개를 모두 선택하세요."; shakeElement('orderButtons'); return; }
+        if(userOrder[0] === '청자' && userOrder[1] === '분청사기' && userOrder[2] === '백자') {
+            msgBox.style.color = '#4ade80'; msgBox.innerText = "통과!"; setTimeout(() => nextStage(4), 800);
+        } else {
+            msgBox.style.color = '#ff6b6b'; msgBox.innerText = "순서가 틀렸습니다."; userOrder = [];
+            document.querySelectorAll('.order-btn').forEach(btn => { btn.classList.remove('selected'); btn.innerText = btn.innerText.replace(/^[1-3]\. /, ''); });
+            shakeElement('orderButtons');
+        }
+    }
+
+    // [4단계] 컬러 사이클
+    const colors = [{name: '회색', hex: '#888'}, {name: '청록색', hex: '#20b2aa'}, {name: '백색', hex: '#fff'}];
+    function cycleColor(btn) {
+        let val = parseInt(btn.getAttribute('data-val')); val = (val + 1) % 3;
+        btn.setAttribute('data-val', val); btn.innerText = colors[val].name; btn.style.background = colors[val].hex; btn.style.color = (val === 2) ? '#000' : '#fff';
+    }
+    function checkColorAnswer() {
+        let btns = document.querySelectorAll('.color-btn'); let msgBox = document.getElementById('msg4');
+        if(btns[0].getAttribute('data-val') == '1' && btns[1].getAttribute('data-val') == '0' && btns[2].getAttribute('data-val') == '2') {
+            msgBox.style.color = '#4ade80'; msgBox.innerText = "통과!"; setTimeout(() => nextStage(5), 800);
+        } else { msgBox.style.color = '#ff6b6b'; msgBox.innerText = "색상이 맞지 않습니다."; shakeElement('stage4'); }
+    }
+
+    // [5단계] 다이얼 (18)
+    function spinDial(id, dir) {
+        let el = document.getElementById(id); let val = parseInt(el.innerText) + dir;
+        if(val > 9) val = 0; if(val < 0) val = 9; el.innerText = val;
+    }
+    function checkDialAnswer() {
+        let val = document.getElementById('s5_d1').innerText + document.getElementById('s5_d2').innerText;
+        let msgBox = document.getElementById('msg5');
+        if(val === '18') { msgBox.style.color = '#4ade80'; msgBox.innerText = "통과!"; setTimeout(() => nextStage(6), 800); } 
+        else { msgBox.style.color = '#ff6b6b'; msgBox.innerText = "틀렸습니다."; shakeElement('lock5'); }
+    }
+
+    // [6단계] 금고 키패드 (3910)
+    let kpInput = "";
+    function pressKey(num) {
+        if(kpInput.length < 4) { kpInput += num; document.getElementById('keypad-display').innerText = kpInput.padEnd(4, '_'); }
+    }
+    function clearKey() { kpInput = ""; document.getElementById('keypad-display').innerText = "____"; }
+    function checkKeypadAnswer() {
+        let msgBox = document.getElementById('msg6');
+        if(kpInput === "3910") {
+            msgBox.style.color = '#4ade80'; msgBox.innerText = "금고가 열렸습니다!"; setTimeout(() => nextStage(7), 800);
+        } else {
+            msgBox.style.color = '#ff6b6b'; msgBox.innerText = "비밀번호 오류!"; clearKey(); shakeElement('keypad-display');
+        }
+    }
+    clearKey();
+
+    // [7단계] 슬라이더 (1450)
+    function updateTempDisplay(val) { document.getElementById('tempValue').innerText = val; }
+    function checkSliderAnswer() {
+        let temp = document.getElementById('kilnTemp').value; let msgBox = document.getElementById('msg7');
+        if(temp === '1450') { msgBox.style.color = '#4ade80'; msgBox.innerText = "통과!"; setTimeout(() => nextStage(8), 800); } 
+        else { msgBox.style.color = '#ff6b6b'; msgBox.innerText = "온도 오류!"; }
+    }
+
+    // [8단계] O/X 스위치 (O, X, O)
+    function checkSwitchAnswer() {
+        let sw1 = document.getElementById('sw1').checked, sw2 = document.getElementById('sw2').checked, sw3 = document.getElementById('sw3').checked;
+        let msgBox = document.getElementById('msg8');
+        if(sw1 === true && sw2 === false && sw3 === true) {
+            msgBox.style.color = '#4ade80'; msgBox.innerText = "통과!"; setTimeout(() => nextStage(9), 800);
+        } else { msgBox.style.color = '#ff6b6b'; msgBox.innerText = "보안 경고!"; }
+    }
+
+    // [9단계] 함정 찾기 (모조법)
+    function checkFake(btn, isSpy) {
+        let msgBox = document.getElementById('msg9');
+        if(isSpy) {
+            btn.classList.add('correct'); msgBox.style.color = '#4ade80'; msgBox.innerText = "가짜를 색출했습니다! (끊음질에 대한 설명임)";
+            setTimeout(() => nextStage(10), 1500);
+        } else {
+            btn.classList.add('wrong'); msgBox.style.color = '#ff6b6b'; msgBox.innerText = "이것은 진짜 설명입니다. 다시 찾으세요!";
+            setTimeout(() => btn.classList.remove('wrong'), 1000);
+        }
+    }
+
+    // [10단계] 단어 블록 (줄음질)
+    let currentWord = "";
+    function addSyllable(syl) { if(currentWord.length < 3) { currentWord += syl; document.getElementById('wordDisplay').innerText = currentWord; } }
+    function clearWord() { currentWord = ""; document.getElementById('wordDisplay').innerText = ""; }
+    function checkWordAnswer() {
+        let msgBox = document.getElementById('msg10');
+        if(currentWord === "줄음질") {
+            msgBox.style.color = '#4ade80'; msgBox.innerText = "시스템 완전 장악!"; setTimeout(endGame, 1200);
+        } else { msgBox.style.color = '#ff6b6b'; msgBox.innerText = "패스워드 오류!"; clearWord(); }
+    }
+
+    // 엔딩 및 클리어 도장 찍기
+    function endGame() {
+        clearInterval(timerInterval); 
+        document.getElementById('timer-display').style.display = "none";
+        
+        let elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+        let min = String(Math.floor(elapsedTime / 60)).padStart(2, '0'); let sec = String(elapsedTime % 60).padStart(2, '0');
+        let finalTimeStr = `${min}:${sec}`;
+        
+        document.getElementById('resultName').innerText = playerName; 
+        document.getElementById('resultTime').innerText = finalTimeStr;
+        
+        // 🚨 기기 내 클리어 기록 도장 쾅!
+        localStorage.setItem('escapeCleared_Complete', 'true');
+        
+        saveAndShowRanking(playerName, elapsedTime, finalTimeStr); 
+        nextStage(11);
+    }
+
+    // 랭킹 저장 및 렌더링
+    function saveAndShowRanking(name, seconds, timeStr) {
+        let records = JSON.parse(localStorage.getItem('escapeRecordsComplete')) || [];
+        records.push({ name: name, timeSec: seconds, timeStr: timeStr });
+        records.sort((a, b) => a.timeSec - b.timeSec); 
+        records = records.slice(0, 3); // 3등까지만 저장
+        localStorage.setItem('escapeRecordsComplete', JSON.stringify(records));
+        
+        showRankingOnly();
+    }
+
+    // 이미 클리어한 사람들을 위해 랭킹만 그려주는 함수
+    function showRankingOnly() {
+        let records = JSON.parse(localStorage.getItem('escapeRecordsComplete')) || [];
+        let listHtml = "", medals = ["🥇", "🥈", "🥉"];
+        for(let i=0; i<records.length; i++) { 
+            listHtml += `<li style="margin-bottom:5px;">${medals[i]} ${records[i].name} - ${records[i].timeStr}</li>`; 
+        }
+        document.getElementById('rankingList').innerHTML = listHtml;
+    }
+</script>
+</body>
+</html>
