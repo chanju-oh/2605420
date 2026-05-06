@@ -474,11 +474,11 @@
     }
     clearKey();
 
-    // [7단계] 슬라이더 (1450)
+    // [7단계] 슬라이더 (1250)
     function updateTempDisplay(val) { document.getElementById('tempValue').innerText = val; }
     function checkSliderAnswer() {
         let temp = document.getElementById('kilnTemp').value; let msgBox = document.getElementById('msg7');
-        if(temp === '1450') { msgBox.style.color = '#4ade80'; msgBox.innerText = "통과!"; setTimeout(() => nextStage(8), 800); } 
+        if(temp === '1250') { msgBox.style.color = '#4ade80'; msgBox.innerText = "통과!"; setTimeout(() => nextStage(8), 800); } 
         else { msgBox.style.color = '#ff6b6b'; msgBox.innerText = "온도 오류!"; }
     }
 
